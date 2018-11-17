@@ -49,10 +49,7 @@ void setup() {
   pinMode(pin_Dir1, OUTPUT);
   pinMode(pin_Dir2, OUTPUT);
   delay(2000);
-
-  Move_Straight(458, 255);
-  delay(200);
-  
+ 
 }
 
 
@@ -62,20 +59,36 @@ void Move_Straight(int n, int spd) {
 
 	Left_Motor.write(0);
 	Right_Motor.write(0);
+	long Kp = 30.0;
+	
 
-	while (n_Right_Motor <= n) {
-		digitalWrite(pin_Dir1, HIGH);
-		digitalWrite(pin_Dir2, LOW);
-		analogWrite(pin_EN1, spd);
-		analogWrite(pin_EN2, spd);
-		volatile int n_Left = Left_Motor.read();
+	while (abs(n_Right_Motor) <= n) {
+		volatile int n_Left = -Left_Motor.read();
 		volatile int n_Right = Right_Motor.read();
-
+		int n_error = n_Left - n_Right;
+    int n_errorP = 0;
+		digitalWrite(pin_Dir1, HIGH);
+		digitalWrite(pin_Dir2,LOW );
+		int PIDspd_1 = spd - (Kp * n_error); // error = L - R
+		int PIDspd_2 = spd + (Kp * n_error);
+    constrain(PIDspd_1,0,255);
+    constrain(PIDspd_2,0,255);
+    //analogWrite(pin_EN1,spd);
+    //analogWrite(pin_EN2, spd);
+		analogWrite(pin_EN1, PIDspd_1);
+		analogWrite(pin_EN2, PIDspd_2);
+		
+		
 		if (n_Left != n_Left_Motor || n_Right != n_Right_Motor) {
-			n_Left_Motor = n_Left;
+			n_Left_Motor = n_Left; //previous n = present
 			n_Right_Motor = n_Right;
 		}
-
+   if (n_error != n_errorP) {
+     n_errorP = n_error; //previous n = present
+   }
+		
+    Serial.println(n_error);
+    //Serial.println(" ");
 		if (n_Right_Motor >= n) {
 			break;
 		}
@@ -84,58 +97,23 @@ void Move_Straight(int n, int spd) {
 			break;
 		}
 
-		String SL = "L " + String(n_Left_Motor) + "  R " + String(n_Right_Motor);
-		Serial.println(SL);
+		String SL = "L " + String(n_Left_Motor) + "  R " + String(n_Right_Motor)+"  E "+String(n_error);
+		//Serial.println(SL);
 	}
-	digitalWrite(pin_EN1,LOW);
-	digitalWrite(pin_EN2,LOW);
+	analogWrite(pin_EN1,0);
+	analogWrite(pin_EN2, 0);
 	
+
 	if (n_Left_Motor != 0 || n_Right_Motor != 0) {
 		n_Left_Motor = a;
 		n_Right_Motor = b;
 	}
 }
-
-void Turn(int n, int spd){
-
-  Left_Motor.write(0);
-  Right_Motor.write(0);
-
-  while (n_Right_Motor <= n) {
-    digitalWrite(pin_Dir1, 1);
-    digitalWrite(pin_Dir2, 1);
-    analogWrite(pin_EN1, spd);
-    analogWrite(pin_EN1, spd);
-    volatile int n_Left = Left_Motor.read();
-    volatile int n_Right = Right_Motor.read();
-
-    if (n_Left != n_Left_Motor || n_Right != n_Right_Motor) {
-      n_Left_Motor = n_Left;
-      n_Right_Motor = n_Right;
-    }
-
-    if (n_Right_Motor >= n) {
-      break;
-    }
-
-    else if (n_Left_Motor >= n) {
-      break;
-    }
-
-    String SL = "L " + String(n_Left_Motor) + "  R " + String(n_Right_Motor);
-    Serial.println(SL);
-  }
-  analogWrite(pin_EN1,0);
-  analogWrite(pin_EN2, 0);
   
-  if (n_Left_Motor != 0 || n_Right_Motor != 0) {
-    n_Left_Motor = a;
-    n_Right_Motor = b;
-  }
-}
+
+
 
 void loop() {
-  //digitalWrite(pin_Dir1,HIGH);
-  //analogWrite(pin_EN1,155);
-  
+	Move_Straight(2160, 230);
+	while(1);
 }
