@@ -44,7 +44,10 @@ insert names here
 //Pins :
 Encoder LEnc(2,8);
 Encoder REnc(3,9);
-Shield2AMotor motor(SIGNED_MAGNITUDE);
+int pin_EN1 = 4; //motor pins
+int pin_EN2 = 7;
+int pin_Dir1 = 5;
+int pin_Dir2 = 6;
 //variables :
 //double Setpoint, Input, Output;
 //double Kp=2, Ki=5, Kd=1;
@@ -53,10 +56,7 @@ long LEncRO = -34;
 long REncRO = -12;
 volatile long LEncR = 0;
 volatile long REncR = 0;
-void forward() {
-//  motor.control(60,60)
-  
-}
+
 void LEncS(){
   LEncR = LEnc.read();
   if (LEncR != LEncRO) {
@@ -75,21 +75,37 @@ void REncS(){
     Serial.println(SR2);
 }
 }
-void forward(setpoint){
-	long L_v = 85;
-	long R_v = 85;
-	motor.control(L_v, R_v);
-	while (LEncR < setpoint*1.3481) {
-		L_v = 0;
-	}
-	while (REncR => setpoint*1.3481) {
+void forward(int setpoint){
+	volatile long L_v;
+	
+	volatile long R_v;
+	while ((LEncR >= setpoint * 1.3481) && (REncR >= setpoint * 1.3481)) {
+
+		//if (LEncR <= setpoint*1.3481) {
+			//L_v = 0;
+		//}
+		digitalWrite(pin_Dir2, HIGH);
+		analogWrite(pin_EN2, R_v);
+		digitalWrite(pin_Dir1, HIGH);
+		analogWrite(pin_EN1, L_v);
+		if (LEncR >= setpoint * 1.3481) {
+			L_v = 0;
+		}
+		L_v = 100;
+		if (REncR >= setpoint * 1.3481) {
 			R_v = 0;
+		}
+		R_v = 100;
 	}
-	motor.control(0, 0);
+	
 }
 
 void setup() {
   Serial.begin(9600);
+  pinMode(pin_EN1, OUTPUT);
+  pinMode(pin_EN2, OUTPUT);
+  pinMode(pin_Dir1, OUTPUT);
+  pinMode(pin_Dir2, OUTPUT);
   // put your setup code here, to run once:
 
 }
@@ -98,7 +114,15 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-
+	
+	//forward(340);
+	digitalWrite(pin_Dir2, HIGH);
+	analogWrite(pin_EN2, 135);
+	digitalWrite(pin_Dir1, HIGH);
+	analogWrite(pin_EN1, 135);
+  
+	//Serial.println("End");
+	//while (1);
 }
 
     
