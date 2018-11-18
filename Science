@@ -1,0 +1,110 @@
+#include <Shield2AMotor.h>
+
+
+
+#include <Encoder.h> 
+ 
+Shield2AMotor motor(SIGNED_MAGNITUDE);
+volatile int n_Left_Motor = 0; // encoder values(degrees)
+volatile int n_Right_Motor = 0;
+int a = 0; //n reset at waypoint
+int b = 0;
+//pins
+int pin_EN1 = 4; //motor pins locked anti-phase
+int pin_Dir1 = 6;
+int pin_EN2 = 5;
+int pin_Dir2 = 7;
+
+
+Encoder Left_Motor(2,8); // encoder pins for library
+Encoder Right_Motor(3,9); 
+
+
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  pinMode(pin_EN1, OUTPUT);
+  pinMode(pin_EN2, OUTPUT);
+  pinMode(pin_Dir1, OUTPUT);
+  pinMode(pin_Dir2, OUTPUT);
+  delay(1000);
+
+
+}
+
+
+void print(int Setpoint){
+  Left_Motor.write(0);
+  Right_Motor.write(0);
+  int i = 10;
+   
+  while  (i>0) {
+    int spd = 100;
+    volatile int n_Left = -Left_Motor.read();
+    volatile int n_Right = Right_Motor.read();
+    int Lv;
+    int Rv;
+    motor.control(Lv,Rv);
+    
+    if((n_Left<Setpoint+6) &&(n_Left>Setpoint-3)){  //stop
+     Lv=0;
+    }
+    if((n_Right<Setpoint+6) &&(n_Right>Setpoint-3)){  //stop
+     Rv=0;
+    }
+    if(n_Left<Setpoint-5){ //fwd
+    Lv = spd;
+    }
+    if(n_Right<Setpoint-5){ //fwd
+    Rv=spd;
+    }
+    if(n_Left>Setpoint+5){ //bwd
+   Lv=-spd;
+    }
+    if(n_Right>Setpoint+5){ //bwd
+     Rv=-spd;
+    }
+    
+   
+    String hs = "L "+String(n_Left) +" R "+String(n_Right);
+     Serial.println(hs);
+   if((Lv==0)&&(Rv==0)) {
+      i--;
+   } 
+  }
+}
+
+void temp(){
+  Right_Motor.write(0);
+  Left_Motor.write(0);
+  int i = 1;
+  while(i>0){
+    volatile int n_Right = Right_Motor.read();
+    volatile int n_Left = Left_Motor.read();
+  
+  int RV=0;
+  int LV=0;
+  if(n_Right<1200){
+    RV=100;
+  }
+  if(n_Left<3200){
+    LV=100;
+  }
+ 
+  
+  motor.control(LV,RV);
+  Serial.println(n_Right);
+  }
+}
+void loop() {
+  //motor.control(100,100);
+ print(800);
+ //analogWrite(pin_EN2,250);
+//digitalWrite(pin_Dir2,LOW);
+//motor.control(100,0);
+//temp();
+while(1);
+
+ 
+}
